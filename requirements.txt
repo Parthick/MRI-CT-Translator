@@ -1,0 +1,22 @@
+scikit-learn
+tensorflow
+pandas 
+gdown
+dvc
+mlflow
+notebook
+numpy
+matplotlib
+seaborn
+python-box
+pyYAML
+tqdm
+ensure
+joblib
+types-PyYAML
+scipy
+Django
+psycopg2-binary
+django-cors-headers
+whitenoise
+-e .
