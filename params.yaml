@@ -1,1 +1,5 @@
-key : val
+EPOCHS : 1
+LR : 0.0002
+L2 : 'mse'
+L1 : 'mae'
+IMAGE_SHAPE : [256,256,3]
