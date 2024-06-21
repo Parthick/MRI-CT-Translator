@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+    <link href="{% static 'css/tailwind.output.css' %}" rel="stylesheet">
+    <style>
+        .image-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .image-container img {
+            max-width: 100%;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .image-container img:hover {
+            transform: scale(1.1);
+        }
+        .image-controls {
+            margin-top: 10px;
+        }
+        .zoomed {
+            transform: scale(1.5) !important;
+        }
+        .rotated-90 {
+            transform: rotate(90deg);
+        }
+        .rotated-180 {
+            transform: rotate(180deg);
+        }
+        .rotated-270 {
+            transform: rotate(270deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Prediction Result</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% if prediction.original_mri %}
+            <div class="image-container">
+                <h2 class="font-bold">Original MRI</h2>
+                <img src="{{ prediction.original_mri.url }}" alt="Original MRI">
+                <div class="image-controls">
+                    <button class="rotate-btn bg-blue-500 text-white py-1 px-3 rounded mt-2">Rotate</button>
+                    <button class="zoom-btn bg-blue-500 text-white py-1 px-3 rounded mt-2">Zoom</button>
+                </div>
+            </div>
+            <div class="image-container">
+                <h2 class="font-bold">Generated CT</h2>
+                <img src="{{ prediction.generated_ct.url }}" alt="Generated CT">
+                <div class="image-controls">
+                    <button class="rotate-btn bg-blue-500 text-white py-1 px-3 rounded mt-2">Rotate</button>
+                    <button class="zoom-btn bg-blue-500 text-white py-1 px-3 rounded mt-2">Zoom</button>
+                </div>
+            </div>
+            {% endif %}
+            {% if prediction.original_ct %}
+            <div class="image-container">
+                <h2 class="font-bold">Original CT</h2>
+                <img src="{{ prediction.original_ct.url }}" alt="Original CT">
+                <div class="image-controls">
+                    <button class="rotate-btn interactive-button bg-custom-blue text-white py-2 px-4 rounded hover:bg-custom-light-blue mt-2">Rotate</button>
+                    <button class="zoom-btn interactive-button bg-custom-blue text-white py-2 px-4 rounded hover:bg-custom-light-blue mt-2">Zoom</button>
+                </div>
+            </div>
+            <div class="image-container">
+                <h2 class="font-bold">Generated MRI</h2>
+                <img src="{{ prediction.generated_mri.url }}" alt="Generated MRI">
+                <div class="image-controls">
+                    <button class="rotate-btn interactive-button bg-custom-blue text-white py-2 px-4 rounded hover:bg-custom-light-blue mt-2">Rotate</button>
+                    <button class="zoom-btn interactive-button bg-custom-blue text-white py-2 px-4 rounded hover:bg-custom-light-blue mt-2">Zoom</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rotateButtons = document.querySelectorAll('.rotate-btn');
+            const zoomButtons = document.querySelectorAll('.zoom-btn');
+
+            rotateButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const img = button.parentElement.previousElementSibling;
+                    if (img.classList.contains('rotated-270')) {
+                        img.classList.remove('rotated-270');
+                    } else if (img.classList.contains('rotated-180')) {
+                        img.classList.remove('rotated-180');
+                        img.classList.add('rotated-270');
+                    } else if (img.classList.contains('rotated-90')) {
+                        img.classList.remove('rotated-90');
+                        img.classList.add('rotated-180');
+                    } else {
+                        img.classList.add('rotated-90');
+                    }
+                });
+            });
+
+            zoomButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const img = button.parentElement.previousElementSibling;
+                    img.classList.toggle('zoomed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}
