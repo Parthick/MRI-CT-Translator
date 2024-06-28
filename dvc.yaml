@@ -1,0 +1,21 @@
+stages:
+  data_ingestion:
+    cmd: python src/MRICTranslater/pipeline/stage_01_data_ingestion.py
+    deps:
+      - src/MRICTranslater/pipeline/stage_01_data_ingestion.py
+      - config/config.yaml
+    outs:
+      - artifacts/data_ingestion/dataset/images
+
+
+  training:
+    cmd: python src/MRICTranslater/pipeline/stage_02_training.py
+    deps:
+      - src/MRICTranslater/pipeline/stage_02_training.py
+      - config/config.yaml
+      - params.yaml
+      - artifacts/data_ingestion/dataset/images
+    outs:
+      - artifacts/training/tf_g_model_AtoB_001742.h5
+      - artifacts/training/tf_g_model_BtoA_001742.h5
+    
