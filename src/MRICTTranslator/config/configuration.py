@@ -33,7 +33,8 @@ class ConfigurationManager:
         dataset = "artifacts/data_ingestion/dataset/Dataset/images/"
         training_config = ModelTrainingConfig(
             root_dir=config.root_dir,
-            model_path=config.model_path,
+            model_path_AtoB=config.model_path_AtoB,
+            model_path_BtoA=config.model_path_BtoA,
             dataset=str(dataset),
             img_shape=params.IMAGE_SHAPE,
             epochs=params.EPOCHS,

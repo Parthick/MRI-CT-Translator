@@ -20,6 +20,11 @@ from numpy import ones
 from numpy import asarray
 from numpy.random import randint
 from matplotlib import pyplot
+from os import listdir
+from numpy import asarray
+from numpy import vstack
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.preprocessing.image import load_img
 
 
 @ensure_annotations
@@ -299,6 +304,19 @@ class InstanceNormalization(Layer):
 # Preprocess data to change input range to values between -1 and 1
 # This is because the generator uses tanh activation in the output layer
 # And tanh ranges between -1 and 1
+def load_images(path, size=(256, 256)):
+    data_list = list()
+    # enumerate filenames in directory, assume all are images
+    for filename in listdir(path):
+        # load and resize the image
+        pixels = load_img(path + filename, target_size=size)
+        # convert to numpy array
+        pixels = img_to_array(pixels)
+        # store
+        data_list.append(pixels)
+    return asarray(data_list)
+
+
 def preprocess_data(data):
     # load compressed arrays
     # unpack arrays
@@ -344,12 +362,12 @@ def generate_fake_samples(g_model, dataset, patch_shape):
 
 
 # periodically save the generator models to file
-def save_models(step, g_model_AtoB, g_model_BtoA):
+def save_models(step, g_model_AtoB, g_model_BtoA, model_path_AtoB, model_path_BtoA):
     # save the first generator model
-    filename1 = "artifacts/training/gan_model/g_model_AtoB_%06d.h5" % (step + 1)
+    filename1 = model_path_AtoB + "_%06d.h5" % (step + 1)
     g_model_AtoB.save(filename1)
     # save the second generator model
-    filename2 = "artifacts/training/gan_model/g_model_BtoA_%06d.h5" % (step + 1)
+    filename2 = model_path_BtoA + "_%06d.h5" % (step + 1)
     g_model_BtoA.save(filename2)
     print(">Saved: %s and %s" % (filename1, filename2))
 
@@ -405,80 +423,20 @@ def update_image_pool(pool, images, max_size=50):
 
 
 # train cyclegan models
-def train(
-    d_model_A,
-    d_model_B,
-    g_model_AtoB,
-    g_model_BtoA,
-    c_model_AtoB,
-    c_model_BtoA,
-    dataset,
-    epochs=1,
-):
-    # define properties of the training run
-    (
-        n_epochs,
-        n_batch,
-    ) = (
-        epochs,
-        1,
-    )  # batch size fixed to 1 as suggested in the paper
-    # determine the output square shape of the discriminator
-    n_patch = d_model_A.output_shape[1]
-    # unpack dataset
-    trainA, trainB = dataset
-    # prepare image pool for fake images
-    poolA, poolB = list(), list()
-    # calculate the number of batches per training epoch
-    bat_per_epo = int(len(trainA) / n_batch)
-    # calculate the number of training iterations
-    n_steps = bat_per_epo * n_epochs
-
-    # manually enumerate epochs
-    for i in range(n_steps):
-        # select a batch of real samples from each domain (A and B)
-        X_realA, y_realA = generate_real_samples(trainA, n_batch, n_patch)
-        X_realB, y_realB = generate_real_samples(trainB, n_batch, n_patch)
-        # generate a batch of fake samples using both B to A and A to B generators.
-        X_fakeA, y_fakeA = generate_fake_samples(g_model_BtoA, X_realB, n_patch)
-        X_fakeB, y_fakeB = generate_fake_samples(g_model_AtoB, X_realA, n_patch)
-        # update fake images in the pool. Remember that the paper suggstes a buffer of 50 images
-        X_fakeA = update_image_pool(poolA, X_fakeA)
-        X_fakeB = update_image_pool(poolB, X_fakeB)
-
-        # update generator B->A via the composite model
-        g_loss2, _, _, _, _ = c_model_BtoA.train_on_batch(
-            [X_realB, X_realA], [y_realA, X_realA, X_realB, X_realA]
-        )
-        # update discriminator for A -> [real/fake]
-        dA_loss1 = d_model_A.train_on_batch(X_realA, y_realA)
-        dA_loss2 = d_model_A.train_on_batch(X_fakeA, y_fakeA)
-
-        # update generator A->B via the composite model
-        g_loss1, _, _, _, _ = c_model_AtoB.train_on_batch(
-            [X_realA, X_realB], [y_realB, X_realB, X_realA, X_realB]
-        )
-        # update discriminator for B -> [real/fake]
-        dB_loss1 = d_model_B.train_on_batch(X_realB, y_realB)
-        dB_loss2 = d_model_B.train_on_batch(X_fakeB, y_fakeB)
-
-        # summarize performance
-        # Since our batch size =1, the number of iterations would be same as the size of our dataset.
-        # In one epoch you'd have iterations equal to the number of images.
-        # If you have 100 images then 1 epoch would be 100 iterations
-        print(
-            "Iteration>%d, dA[%.3f,%.3f] dB[%.3f,%.3f] g[%.3f,%.3f]"
-            % (i + 1, dA_loss1, dA_loss2, dB_loss1, dB_loss2, g_loss1, g_loss2)
-        )
-        # evaluate the model performance periodically
-        # If batch size (total images)=100, performance will be summarized after every 75th iteration.
-        if (i + 1) % (bat_per_epo * 1) == 0:
-            # plot A->B translation
-            summarize_performance(i, g_model_AtoB, trainA, "AtoB")
-            # plot B->A translation
-            summarize_performance(i, g_model_BtoA, trainB, "BtoA")
-        if (i + 1) % (bat_per_epo * 5) == 0:
-            # save the models
-            # #If batch size (total images)=100, model will be saved after
-            # every 75th iteration x 5 = 375 iterations.
-            save_models(i, g_model_AtoB, g_model_BtoA)
+# plot the image, its translation, and the reconstruction
+def show_plot(imagesX, imagesY1, imagesY2):
+    images = vstack((imagesX, imagesY1, imagesY2))
+    titles = ["Real", "Generated", "Reconstructed"]
+    # scale from [-1,1] to [0,1]
+    images = (images + 1) / 2.0
+    # plot images row by row
+    for i in range(len(images)):
+        # define subplot
+        pyplot.subplot(1, len(images), 1 + i)
+        # turn off axis
+        pyplot.axis("off")
+        # plot raw pixel data
+        pyplot.imshow(images[i])
+        # title
+        pyplot.title(titles[i])
+    pyplot.show()

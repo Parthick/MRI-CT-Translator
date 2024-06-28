@@ -3,9 +3,10 @@ artifacts_root: artifacts
 data_ingestion:
   root_dir: artifacts/data_ingestion
   source_URL: https://drive.google.com/file/d/1o8oDl3sAdJzhm38OZdb9e7qqVTLV1Rqp/view?usp=sharing
-  local_data_file: artifacts/data_ingestion/alzheimer.zip
+  local_data_file: artifacts/data_ingestion/mri-ct-dataset.zip
   unzip_dir: artifacts/data_ingestion/dataset
 
 training:
   root_dir: artifacts/training
-  model_path: artifacts/training/gan_model
+  model_path_AtoB: artifacts/training/tf_g_model_AtoB_{}.h5
+  model_path_BtoA: artifacts/training/tf_g_model_BtoA_{}.h5

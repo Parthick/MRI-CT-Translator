@@ -164,3 +164,9 @@ cython_debug/
 
 
 artifacts/*
+node_modules/*
+
+# Ignore DVC files
+.dvc/
+dvc.lock
+*.dvc

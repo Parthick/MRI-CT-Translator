@@ -13,7 +13,8 @@ class DataIngestionConfig:
 @dataclass(frozen=True)
 class ModelTrainingConfig:
     root_dir: Path
-    model_path: Path
+    model_path_AtoB: Path
+    model_path_BtoA: Path
     dataset: Path
     img_shape: tuple
     epochs: int
